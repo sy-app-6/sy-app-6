@@ -109,15 +109,15 @@ For `images_per_original = N`, use this sequence:
 9. **🔄 Automatic Range**: System intelligently generates negative values from positive ones
 
 #### **🛠️ SUITABLE TRANSFORMATION TOOLS:**
-| Tool | Positive Value Effect | Negative Value Effect | Neutral Value |
-|------|----------------------|----------------------|---------------|
-| **Rotation** | Clockwise rotation (e.g., +15°) | Counter-clockwise rotation (e.g., -15°) | 0° |
-| **Brightness** | Brighter image (e.g., 1.2 = +20%) | Darker image (e.g., 0.8 = -20%) | 1.0 |
-| **Contrast** | Increased contrast (e.g., 1.2 = +20%) | Decreased contrast (e.g., 0.8 = -20%) | 1.0 |
-| **Hue Shift** | Shift colors clockwise (e.g., +30°) | Shift colors counter-clockwise (e.g., -30°) | 0° |
-| **Saturation** | More saturated colors (e.g., 1.3 = +30%) | Less saturated colors (e.g., 0.7 = -30%) | 1.0 |
-| **Shear** | Shear in one direction (e.g., +10°) | Shear in opposite direction (e.g., -10°) | 0° |
-| **Gamma** | Gamma > 1.0 (darkens mid-tones) | Gamma < 1.0 (brightens mid-tones) | 1.0 |
+| Tool | Positive Value Effect | Negative Value Effect | Neutral Value | UI Display |
+|------|----------------------|----------------------|---------------|------------|
+| **Rotation** | Clockwise rotation (e.g., +15°) | Counter-clockwise rotation (e.g., -15°) | 0° | -50% to +50% |
+| **Brightness** | Brighter image (e.g., +20%) | Darker image (e.g., -20%) | 0% | -50% to +50% |
+| **Contrast** | Increased contrast (e.g., +20%) | Decreased contrast (e.g., -20%) | 0% | -50% to +50% |
+| **Hue Shift** | Shift colors clockwise (e.g., +30°) | Shift colors counter-clockwise (e.g., -30°) | 0° | -50% to +50% |
+| **Saturation** | More saturated colors (e.g., +30%) | Less saturated colors (e.g., -30%) | 0% | -50% to +50% |
+| **Shear** | Shear in one direction (e.g., +10°) | Shear in opposite direction (e.g., -10°) | 0° | -50% to +50% |
+| **Gamma** | Darkens mid-tones (e.g., +30%) | Brightens mid-tones (e.g., -30%) | 0% | -50% to +50% |
 
 **Note**: Tools like Blur, Noise, Resize, Crop, Equalize, and Grayscale are not suitable for negative values as they don't have natural opposites.
 
@@ -332,41 +332,18 @@ For `images_per_original = N`, use this sequence:
 
 #### 📋 Sub-Tasks:
 
-##### 1.1 Create Single Slider Component
-- [x] **Implement single slider component with auto-generation logic**
+##### 1.1 Create Percentage-Based Single Slider Component
+- [x] **Implement percentage-based slider component with auto-generation logic**
   ```jsx
   // In IndividualTransformationControl.jsx
-  const renderSingleSlider = (paramKey, paramDef) => {
-    // Get current value with appropriate defaults
-    const currentValue = parameters[paramKey] !== undefined ? 
-      parameters[paramKey] : paramDef.default;
+  const renderPercentageSlider = (paramKey, paramDef) => {
+    // Get current percentage value with appropriate defaults
+    const currentPercentage = parameters[paramKey] !== undefined ? 
+      parameters[paramKey] : 0; // Default to 0% (no change)
     
-    // Get appropriate unit label
-    const unitLabel = getUnitLabel(paramKey, paramDef);
-    
-    // For brightness and contrast, show +/- values relative to 1.0
-    const showRelativeValues = (paramKey === 'brightness' || paramKey === 'contrast');
-    
-    // Format value for display
-    const formatValue = (val) => {
-      if (showRelativeValues) {
-        // Show as +/- percentage from normal
-        const relativeVal = ((val - 1.0) * 100).toFixed(0);
-        return relativeVal > 0 ? `+${relativeVal}%` : `${relativeVal}%`;
-      }
-      
-      // For rotation, just show the degrees
-      if (paramKey === 'rotation') {
-        return `${val}°`;
-      }
-      
-      // For scale, show as percentage
-      if (paramKey === 'scale') {
-        return `${val}%`;
-      }
-      
-      // Default formatting
-      return val.toFixed(2);
+    // Format percentage for display
+    const formatPercentage = (val) => {
+      return val > 0 ? `+${val}%` : `${val}%`;
     };
     
     return (
@@ -379,62 +356,48 @@ For `images_per_original = N`, use this sequence:
         }}>
           <span style={{ fontSize: '12px', fontWeight: 500 }}>
             {paramKey.charAt(0).toUpperCase() + paramKey.slice(1)}
-            <span style={{ fontSize: '10px', color: '#999', marginLeft: 4 }}>
-              {unitLabel}
-            </span>
           </span>
           <Space>
-            <Tooltip title={`Value: ${formatValue(currentValue)}`}>
+            <Tooltip title={`Value: ${formatPercentage(currentPercentage)}`}>
               <InputNumber
                 size="small"
-                value={currentValue}
-                min={paramDef.min}
-                max={paramDef.max}
-                step={paramDef.step || 0.1}
+                value={currentPercentage}
+                min={-50}
+                max={50}
+                step={1}
+                formatter={value => `${value}%`}
+                parser={value => value.replace('%', '')}
                 onChange={(val) => handleParameterChange(paramKey, val)}
                 disabled={!enabled}
-                style={{ width: 60 }}
+                style={{ width: 70 }}
               />
             </Tooltip>
             <span style={{ fontSize: '10px', color: '#999' }}>
-              (Auto-generates {formatValue(getNegativeValue(paramKey, currentValue))})
+              (Auto-generates {formatPercentage(-currentPercentage)})
             </span>
           </Space>
         </div>
         
-        {/* For brightness and contrast, show marks at -20%, 0%, +20% */}
-        {showRelativeValues ? (
-          <Slider
-            value={currentValue}
-            min={paramDef.min}
-            max={paramDef.max}
-            step={paramDef.step || 0.1}
-            onChange={(val) => handleParameterChange(paramKey, val)}
-            disabled={!enabled}
-            tooltip={{ 
-              formatter: (val) => formatValue(val) 
-            }}
-            marks={{
-              0.8: '-20%',
-              1.0: 'Normal',
-              1.2: '+20%'
-            }}
-            style={{ margin: '4px 0' }}
-          />
-        ) : (
-          <Slider
-            value={currentValue}
-            min={paramDef.min}
-            max={paramDef.max}
-            step={paramDef.step || 0.1}
-            onChange={(val) => handleParameterChange(paramKey, val)}
-            disabled={!enabled}
-            tooltip={{ 
-              formatter: (val) => formatValue(val) 
-            }}
-            style={{ margin: '4px 0' }}
-          />
-        )}
+        {/* Unified slider for all parameters with consistent -50% to +50% range */}
+        <Slider
+          value={currentPercentage}
+          min={-50}
+          max={50}
+          step={1}
+          onChange={(val) => handleParameterChange(paramKey, val)}
+          disabled={!enabled}
+          tooltip={{ 
+            formatter: (val) => formatPercentage(val) 
+          }}
+          marks={{
+            -50: '-50%',
+            -25: '-25%',
+            0: '0%',
+            25: '+25%',
+            50: '+50%'
+          }}
+          style={{ margin: '4px 0' }}
+        />
       </div>
     );
   };
@@ -517,51 +480,72 @@ For `images_per_original = N`, use this sequence:
   };
   ```
 
-##### 1.2 Add Auto-Generation Logic for Negative Values
-- [x] **Add function to calculate negative values from positive ones**
+##### 1.2 Add Percentage-Based Parameter Handling
+- [x] **Add function to convert percentage to actual parameter values**
   ```jsx
   // In IndividualTransformationControl.jsx
-  const getNegativeValue = (paramKey, positiveValue) => {
+  const convertPercentageToValue = (paramKey, percentage) => {
     // Get parameter definition
     const paramDef = transformation.parameters[paramKey];
-    if (!paramDef) return positiveValue;
+    if (!paramDef) return percentage;
     
-    // For parameters with a "normal" or "neutral" value (like brightness, contrast)
-    if (paramKey === 'brightness' || paramKey === 'contrast') {
-      const normalValue = 1.0;
-      // If value is greater than normal, calculate symmetric negative
-      if (positiveValue > normalValue) {
-        const difference = positiveValue - normalValue;
-        return normalValue - difference;
-      }
-      // If value is less than normal, calculate symmetric positive
-      else if (positiveValue < normalValue) {
-        const difference = normalValue - positiveValue;
-        return normalValue + difference;
-      }
-      return normalValue; // Return normal value if equal to normal
-    }
+    // Ensure percentage is within -50 to +50 range
+    const clampedPercentage = Math.max(-50, Math.min(50, percentage));
     
-    // For rotation, flip the sign
+    // For rotation parameters, convert directly to degrees
     if (paramKey === 'rotation') {
-      return -positiveValue;
+      // Scale: -50% to +50% maps to -45° to +45°
+      return clampedPercentage * 0.9; // 45/50 = 0.9
     }
     
-    // For parameters with min/max ranges, calculate opposite position in range
-    const range = paramDef.max - paramDef.min;
-    const position = (positiveValue - paramDef.min) / range;
-    return paramDef.max - (position * range);
+    if (paramKey === 'hue') {
+      // Scale: -50% to +50% maps to -180° to +180°
+      return clampedPercentage * 3.6; // 180/50 = 3.6
+    }
+    
+    // For brightness, contrast, saturation (multiplicative parameters)
+    if (['brightness', 'contrast', 'saturation'].includes(paramKey)) {
+      // Scale: -50% to +50% maps to 0.5 to 1.5
+      return 1.0 + (clampedPercentage / 100.0);
+    }
+    
+    // For gamma correction
+    if (paramKey === 'gamma') {
+      // Scale: -50% to +50% maps to 0.5 to 2.0
+      if (clampedPercentage >= 0) {
+        // 0% to 50% maps to 1.0 to 2.0
+        return 1.0 + (clampedPercentage / 50.0);
+      } else {
+        // -50% to 0% maps to 0.5 to 1.0
+        return 1.0 + (clampedPercentage / 100.0);
+      }
+    }
+    
+    // For other parameters, scale based on min/max values
+    const min = paramDef.min || 0;
+    const max = paramDef.max || 1;
+    const midpoint = (min + max) / 2;
+    const halfRange = (max - min) / 2;
+    
+    // Scale percentage to actual value
+    return midpoint + (clampedPercentage / 50.0) * halfRange;
   };
   ```
 
-- [x] **Update parent component with single values**
+- [x] **Update parent component with percentage and converted values**
   ```jsx
   // Update parent when parameters change
   useEffect(() => {
     const newConfig = {
       enabled,
-      ...parameters,
-      // Add metadata about auto-generated values for backend
+      // Store percentage values for UI
+      percentages: { ...parameters },
+      // Convert percentages to actual values for backend
+      parameters: Object.entries(parameters).reduce((acc, [key, percentage]) => {
+        acc[key] = convertPercentageToValue(key, percentage);
+        return acc;
+      }, {}),
+      // Add metadata about auto-generation for backend
       autoGenerateNegative: true
     };
     onChange(newConfig);
@@ -747,65 +731,84 @@ For `images_per_original = N`, use this sequence:
 
 #### 📋 Sub-Tasks:
 
-##### 3.1 Create Schema.py with Auto-Generation Logic
-- [ ] **Implement function to generate negative values from positive ones**
+##### 3.1 Create Schema.py with Percentage-Based Auto-Generation Logic
+- [ ] **Implement function to convert percentage values to actual parameter values**
   ```python
   # In schema.py
-  def generate_negative_value(param_name, positive_value, param_def):
+  def convert_percentage_to_value(param_name, percentage, param_def):
       """
-      Generate negative/opposite value from a positive value.
+      Convert a percentage (-50% to +50%) to the actual parameter value.
       
       Args:
           param_name: Parameter name (e.g., 'brightness', 'rotation')
-          positive_value: The positive value set by user
+          percentage: The percentage value (-50 to +50)
           param_def: Parameter definition with min/max/default values
           
       Returns:
-          The corresponding negative/opposite value
+          The actual parameter value
       """
-      # For parameters with a "normal" or "neutral" value
-      if param_name in ['brightness', 'contrast', 'saturation']:
-          normal_value = 1.0
-          # Calculate the exact same deviation but in opposite direction
-          deviation = abs(positive_value - normal_value)
-          if positive_value > normal_value:
-              return normal_value - deviation
-          elif positive_value < normal_value:
-              return normal_value + deviation
-          return normal_value  # Return normal value if equal to normal
+      # Ensure percentage is within -50 to +50 range
+      percentage = max(-50, min(50, percentage))
       
-      # For rotation, hue, and shear, simply flip the sign
+      # For rotation parameters, convert directly to degrees
       if param_name in ['rotation', 'hue', 'angle']:
-          return -positive_value
+          # Scale: -50% to +50% maps to -180° to +180° for hue
+          if param_name == 'hue':
+              return (percentage * 3.6)  # 180/50 = 3.6
+          # Scale: -50% to +50% maps to -45° to +45° for rotation
+          elif param_name == 'rotation':
+              return (percentage * 0.9)  # 45/50 = 0.9
+          # Scale: -50% to +50% maps to -30° to +30° for shear angle
+          elif param_name == 'angle':
+              return (percentage * 0.6)  # 30/50 = 0.6
       
-      # For gamma, use the same deviation from 1.0
+      # For brightness, contrast, saturation (multiplicative parameters)
+      if param_name in ['brightness', 'contrast', 'saturation']:
+          # Scale: -50% to +50% maps to 0.5 to 1.5
+          # 0% = 1.0 (no change)
+          # +50% = 1.5 (50% increase)
+          # -50% = 0.5 (50% decrease)
+          return 1.0 + (percentage / 100.0)
+      
+      # For gamma correction
       if param_name == 'gamma':
-          normal_value = 1.0
-          if positive_value == normal_value:
-              return normal_value
-          
-          # If positive value is 2.0 (1.0 + 1.0), negative would be 0.0 (1.0 - 1.0)
-          # If positive value is 0.7 (1.0 - 0.3), negative would be 1.3 (1.0 + 0.3)
-          deviation = abs(positive_value - normal_value)
-          if positive_value > normal_value:
-              return normal_value - deviation
+          # Scale: -50% to +50% maps to 0.5 to 2.0
+          # 0% = 1.0 (no change)
+          # +50% = 2.0 (darker mid-tones)
+          # -50% = 0.5 (brighter mid-tones)
+          if percentage >= 0:
+              # 0% to 50% maps to 1.0 to 2.0
+              return 1.0 + (percentage / 50.0)
           else:
-              return normal_value + deviation
+              # -50% to 0% maps to 0.5 to 1.0
+              return 1.0 + (percentage / 100.0)
       
-      # For other parameters, use the same distance from midpoint but in opposite direction
+      # For other parameters, scale based on min/max values
       min_val = param_def.get('min', 0)
       max_val = param_def.get('max', 1)
       midpoint = (min_val + max_val) / 2
       
-      # Calculate distance from midpoint
-      distance = abs(positive_value - midpoint)
+      # Calculate the range from midpoint to edge
+      half_range = (max_val - min_val) / 2
       
-      # Return opposite point with same distance
-      if positive_value > midpoint:
-          return midpoint - distance
-      elif positive_value < midpoint:
-          return midpoint + distance
-      return midpoint  # Return midpoint if equal to midpoint
+      # Scale percentage to actual value
+      return midpoint + (percentage / 50.0) * half_range
+  ```
+
+- [ ] **Implement function to generate negative values from positive percentages**
+  ```python
+  # In schema.py
+  def generate_negative_percentage(percentage):
+      """
+      Simply negate the percentage value.
+      
+      Args:
+          percentage: The positive percentage value (0 to +50)
+          
+      Returns:
+          The negative percentage value (0 to -50)
+      """
+      return -percentage
   ```
 
 ##### 3.2 Implement Combination Generator
