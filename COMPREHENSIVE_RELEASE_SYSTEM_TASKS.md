@@ -30,8 +30,9 @@ projects/
 ## 🔄 RELEASE SYSTEM WORKFLOW - SMART & MINIMAL TRANSFORMATION STRATEGY
 
 ### **🎯 CORE WORKFLOW:**
-1. **User selects transformations** with parameter ranges (min/max values)
-2. **System applies Smart & Minimal Strategy** for efficient augmentation
+1. **User selects transformations** with single parameter values (not min/max ranges)
+2. **System automatically generates parameter ranges** based on selected values
+   - For applicable tools, if user selects +X value, system uses -X to +X range
 3. **User configures release** (name, images per original, export format)
 4. **System generates augmented images** using the minimal strategy
 5. **Annotations are updated** to match transformations
@@ -48,58 +49,64 @@ For `images_per_original = N`, use this sequence:
 | Step | Description | Example |
 |------|-------------|---------|
 | 1️⃣ | **Original Image** | `(brightness=1.0, contrast=1.0, rotation=0°)` |
-| 2️⃣ | **Max Value for Tool 1** (if enabled) | `brightness = 1.2` |
-| 3️⃣ | **Max Value for Tool 2** | `contrast = 1.2` |
-| 4️⃣ | **Max Value for Tool 3** | `rotation = +15°` |
-| 5️⃣ | **Min Value for Tool 1** | `brightness = 0.8` |
-| 6️⃣ | **Min Value for Tool 2** | `contrast = 0.8` |
+| 2️⃣ | **Positive Value for Tool 1** (if enabled) | `brightness = 1.2` |
+| 3️⃣ | **Positive Value for Tool 2** | `contrast = 1.2` |
+| 4️⃣ | **Positive Value for Tool 3** | `rotation = +15°` |
+| 5️⃣ | **Negative Value for Tool 1** | `brightness = 0.8` (auto-generated from positive value) |
+| 6️⃣ | **Negative Value for Tool 2** | `contrast = 0.8` (auto-generated from positive value) |
+| 7️⃣ | **Negative Value for Tool 3** | `rotation = -15°` (auto-generated from positive value) |
 | 🔁 | **(Optional) Random/Combo effects** only if `N > tool_count × 2 + 1` | `(brightness + rotation)` |
 
 #### **✅ CORE PRINCIPLES:**
 - **Original = Midpoint** → No need to repeat 1.0 or 0° values
-- **Max/Min = Full spectrum coverage** → See extremes of each tool
+- **Single Slider UI** → User only needs to set one value, system generates both positive and negative
+- **Symmetric Range** → For applicable tools, if user sets +X, system uses -X to +X range
 - **One transformation per image** → Clean, interpretable outputs
 - **No combination explosion** → Avoid clutter and complexity
-- **Predictable count** → For N enabled tools: `1 original + N max + N min = 2N+1 images minimum`
+- **Predictable count** → For N enabled tools: `1 original + N positive + N negative = 2N+1 images minimum`
 
 #### **🧪 PRACTICAL EXAMPLES:**
 
-##### **Example A: 3 tools (Brightness, Contrast, Rotation), images_per_original = 6**
+##### **Example A: 3 tools (Brightness, Contrast, Rotation), images_per_original = 7**
 | Image | Applied Transformation |
 |-------|----------------------|
 | 1 | **Original** `(brightness=1.0, contrast=1.0, rotation=0°)` |
-| 2 | **ONLY** `brightness = 1.2` (max) |
-| 3 | **ONLY** `contrast = 1.2` (max) |
-| 4 | **ONLY** `rotation = +15°` (max) |
-| 5 | **ONLY** `brightness = 0.8` (min) |
-| 6 | **ONLY** `contrast = 0.8` (min) |
+| 2 | **ONLY** `brightness = 1.2` (positive value set by user) |
+| 3 | **ONLY** `contrast = 1.2` (positive value set by user) |
+| 4 | **ONLY** `rotation = +15°` (positive value set by user) |
+| 5 | **ONLY** `brightness = 0.8` (negative value auto-generated) |
+| 6 | **ONLY** `contrast = 0.8` (negative value auto-generated) |
+| 7 | **ONLY** `rotation = -15°` (negative value auto-generated) |
 
-##### **Example B: 2 tools (Hue, Gamma), images_per_original = 4**
+##### **Example B: 2 tools (Hue, Gamma), images_per_original = 5**
 | Image | Applied Transformation |
 |-------|----------------------|
 | 1 | **Original** `(hue=0°, gamma=1.0)` |
-| 2 | **ONLY** `hue = +90°` (max) |
-| 3 | **ONLY** `gamma = 2.5` (max) |
-| 4 | **ONLY** `hue = -90°` (min) |
+| 2 | **ONLY** `hue = +90°` (positive value set by user) |
+| 3 | **ONLY** `gamma = 2.5` (positive value set by user) |
+| 4 | **ONLY** `hue = -90°` (negative value auto-generated) |
+| 5 | **ONLY** `gamma = 0.4` (negative value auto-generated) |
 
 ##### **Example C: 4 tools, images_per_original = 12 (with optional combos)**
 | Image | Applied Transformation |
 |-------|----------------------|
-| 1-9 | **Basic set** (1 original + 4 max + 4 min = 9 images) |
+| 1-9 | **Basic set** (1 original + 4 positive + 4 negative = 9 images) |
 | 10 | **Combo**: `brightness=1.2 + contrast=0.8` |
 | 11 | **Combo**: `rotation=15° + hue=45°` |
-| 12 | **Random combo** from remaining possibilities |
+| 12 | **Combo**: `rotation=-15° + hue=-45°` (auto-generated from positive combo) |
 
 ### **🎯 WHY THIS APPROACH IS BRILLIANT:**
 
 #### **🔍 BENEFITS:**
-1. **🎯 Perfect Coverage**: See each tool's full range (min to max)
+1. **🎯 Perfect Coverage**: See each tool's full range (negative to positive)
 2. **🧹 Clean Results**: One transformation per image = easy interpretation
 3. **⚡ Efficient**: No wasted combinations or redundant variations
 4. **📊 Predictable**: User knows exactly what they'll get
 5. **🔍 Individual Understanding**: See pure effect of each tool
 6. **📈 Scalable**: Works with any number of tools
 7. **🚫 No Bloat**: Avoids exponential combination explosion
+8. **🎛️ Simplified UI**: User only needs to set one value per tool
+9. **🔄 Automatic Range**: System intelligently generates negative values from positive ones
 
 ---
 
@@ -115,49 +122,52 @@ For `images_per_original = N`, use this sequence:
 - ✅ Documentation updated with Smart & Minimal Strategy
 
 **🔴 MAJOR ISSUES DISCOVERED:**
-1. **Frontend UI Mismatch**: Still showing old single sliders instead of new range sliders
-2. **Data Format Inconsistency**: Database saving old single-value format `{"adjustment": -50, "enabled": true}` instead of range format
+1. **Frontend UI Approach Change**: Changed from dual-handle range sliders to single sliders with auto-generated ranges
+2. **Data Format Consistency**: Continue using single-value format `{"adjustment": 50, "enabled": true}` with backend generating negative values
 3. **UI Deployment Issues**: Frontend code updates not properly reflected in browser
-4. **Range Slider Implementation**: Need to verify if range slider components are actually deployed
-5. **Dynamic Limits**: "Images per Original" calculation not implemented based on tool count
+4. **Single Slider Implementation**: Need to verify if single slider components are properly deployed
+5. **Dynamic Limits**: "Images per Original" calculation needs to be updated based on tool count (2N+1 formula)
 
 ### **🧪 URGENT TESTING REQUIREMENTS:**
 
 #### **🔍 FRONTEND TESTING NEEDED:**
-- [ ] **Verify range slider UI** is actually displaying (not single sliders)
-- [ ] **Test range value saving** - should save `{"min": 0.8, "max": 1.2}` format
-- [ ] **Check transformation preview** with range values
-- [ ] **Validate images_per_original** dynamic calculation
+- [ ] **Verify single slider UI** is properly displaying and functioning
+- [ ] **Test single value saving** - should save `{"adjustment": 50, "enabled": true}` format
+- [ ] **Check transformation preview** with single values
+- [ ] **Validate images_per_original** dynamic calculation (2N+1 formula)
 - [ ] **Test browser cache issues** - clear cache and reload
 
 #### **🔧 BACKEND TESTING NEEDED:**
 - [ ] **Test Smart & Minimal Strategy** implementation
-- [ ] **Verify transformation application** follows min/max/original pattern
+- [ ] **Verify transformation application** follows positive/negative/original pattern
+- [ ] **Verify auto-generation** of negative values from positive values
 - [ ] **Check annotation updates** work correctly with transformations
 - [ ] **Test release generation** end-to-end workflow
 - [ ] **Validate export functionality** with augmented images
 
 #### **🔄 INTEGRATION TESTING NEEDED:**
 - [ ] **Frontend ↔ Backend** data flow verification
-- [ ] **Database schema** compatibility with range format
+- [ ] **Database schema** compatibility with single-value format
+- [ ] **Auto-generation logic** for negative values from positive values
 - [ ] **File path handling** across different environments
-- [ ] **Error handling** for invalid ranges or missing tools
+- [ ] **Error handling** for invalid values or missing tools
 - [ ] **Performance testing** with multiple tools and large image sets
 
 ### **🎯 NEXT STEPS FOR IMPLEMENTATION:**
 
 1. **🔍 IMMEDIATE**: Test current frontend UI state - verify what's actually deployed
-2. **🔧 PRIORITY**: Implement Smart & Minimal Strategy in backend `schema.py`
-3. **🎨 FRONTEND**: Fix range slider UI if not properly deployed
+2. **🔧 PRIORITY**: Implement Smart & Minimal Strategy with auto-generation in backend `schema.py`
+3. **🎨 FRONTEND**: Ensure single slider UI is properly deployed and functioning
 4. **🧪 TESTING**: Comprehensive end-to-end testing of transformation workflow
-5. **📊 VALIDATION**: Verify all 18 transformation tools work with new strategy
+5. **📊 VALIDATION**: Verify all 18 transformation tools work with new single-value strategy
 
 ### **📋 TESTING CHECKLIST:**
-- [ ] Frontend displays range sliders (not single sliders)
-- [ ] Range values save in correct format `{"min": X, "max": Y}`
-- [ ] Smart & Minimal Strategy generates correct image count
-- [ ] Transformations apply in correct order (original → max → min → combos)
-- [ ] Image preview works with range-based transformations
+- [ ] Frontend displays single sliders correctly
+- [ ] Single values save in correct format `{"adjustment": X, "enabled": true}`
+- [ ] Smart & Minimal Strategy generates correct image count (2N+1 formula)
+- [ ] Transformations apply in correct order (original → positive → negative → combos)
+- [ ] Backend correctly auto-generates negative values from positive values
+- [ ] Image preview works with single-value transformations
 - [ ] Export system packages augmented images correctly
 - [ ] All 18 transformation tools function properly
 - [ ] Cross-platform compatibility maintained
@@ -309,14 +319,14 @@ For `images_per_original = N`, use this sequence:
 
 #### 📋 Sub-Tasks:
 
-##### 1.1 Create RangeSlider Component
-- [x] **Implement dual-handle slider component**
+##### 1.1 Create Single Slider Component
+- [x] **Implement single slider component with auto-generation logic**
   ```jsx
   // In IndividualTransformationControl.jsx
-  const renderRangeSlider = (paramKey, paramDef) => {
-    // Get range values with appropriate defaults
-    const [minValue, maxValue] = parameterRanges[paramKey] || 
-      getDefaultRange(paramKey, parameters[paramKey]);
+  const renderSingleSlider = (paramKey, paramDef) => {
+    // Get current value with appropriate defaults
+    const currentValue = parameters[paramKey] !== undefined ? 
+      parameters[paramKey] : paramDef.default;
     
     // Get appropriate unit label
     const unitLabel = getUnitLabel(paramKey, paramDef);
@@ -361,43 +371,32 @@ For `images_per_original = N`, use this sequence:
             </span>
           </span>
           <Space>
-            <Tooltip title={`Min: ${formatValue(minValue)}`}>
+            <Tooltip title={`Value: ${formatValue(currentValue)}`}>
               <InputNumber
                 size="small"
-                value={minValue}
+                value={currentValue}
                 min={paramDef.min}
-                max={maxValue}
-                step={paramDef.step || 0.1}
-                onChange={(val) => handleRangeChange(paramKey, [val, maxValue])}
-                disabled={!enabled}
-                style={{ width: 60 }}
-              />
-            </Tooltip>
-            <span>-</span>
-            <Tooltip title={`Max: ${formatValue(maxValue)}`}>
-              <InputNumber
-                size="small"
-                value={maxValue}
-                min={minValue}
                 max={paramDef.max}
                 step={paramDef.step || 0.1}
-                onChange={(val) => handleRangeChange(paramKey, [minValue, val])}
+                onChange={(val) => handleParameterChange(paramKey, val)}
                 disabled={!enabled}
                 style={{ width: 60 }}
               />
             </Tooltip>
+            <span style={{ fontSize: '10px', color: '#999' }}>
+              (Auto-generates {formatValue(getNegativeValue(paramKey, currentValue))})
+            </span>
           </Space>
         </div>
         
         {/* For brightness and contrast, show marks at -20%, 0%, +20% */}
         {showRelativeValues ? (
           <Slider
-            range
-            value={[minValue, maxValue]}
+            value={currentValue}
             min={paramDef.min}
             max={paramDef.max}
             step={paramDef.step || 0.1}
-            onChange={(val) => handleRangeChange(paramKey, val)}
+            onChange={(val) => handleParameterChange(paramKey, val)}
             disabled={!enabled}
             tooltip={{ 
               formatter: (val) => formatValue(val) 
@@ -411,12 +410,11 @@ For `images_per_original = N`, use this sequence:
           />
         ) : (
           <Slider
-            range
-            value={[minValue, maxValue]}
+            value={currentValue}
             min={paramDef.min}
             max={paramDef.max}
             step={paramDef.step || 0.1}
-            onChange={(val) => handleRangeChange(paramKey, val)}
+            onChange={(val) => handleParameterChange(paramKey, val)}
             disabled={!enabled}
             tooltip={{ 
               formatter: (val) => formatValue(val) 
@@ -506,66 +504,68 @@ For `images_per_original = N`, use this sequence:
   };
   ```
 
-##### 1.2 Update Parameter State Management
-- [x] **Modify state structure to support ranges**
+##### 1.2 Add Auto-Generation Logic for Negative Values
+- [x] **Add function to calculate negative values from positive ones**
   ```jsx
   // In IndividualTransformationControl.jsx
-  const [parameterRanges, setParameterRanges] = useState({});
-  
-  // Initialize from transformation definition and current config
-  useEffect(() => {
-    const initialRanges = {};
+  const getNegativeValue = (paramKey, positiveValue) => {
+    // Get parameter definition
+    const paramDef = transformation.parameters[paramKey];
+    if (!paramDef) return positiveValue;
     
-    if (transformation.parameters) {
-      Object.entries(transformation.parameters).forEach(([key, paramDef]) => {
-        // Check if range already exists in config
-        if (config.ranges && config.ranges[key]) {
-          initialRanges[key] = config.ranges[key];
-        } else {
-          // Create default range based on current single value
-          const currentValue = config[key] !== undefined ? config[key] : paramDef.default;
-          initialRanges[key] = [
-            currentValue,
-            currentValue
-          ];
-        }
-      });
+    // For parameters with a "normal" or "neutral" value (like brightness, contrast)
+    if (paramKey === 'brightness' || paramKey === 'contrast') {
+      const normalValue = 1.0;
+      // If value is greater than normal, calculate symmetric negative
+      if (positiveValue > normalValue) {
+        const difference = positiveValue - normalValue;
+        return normalValue - difference;
+      }
+      // If value is less than normal, calculate symmetric positive
+      else if (positiveValue < normalValue) {
+        const difference = normalValue - positiveValue;
+        return normalValue + difference;
+      }
+      return normalValue; // Return normal value if equal to normal
     }
     
-    setParameterRanges(initialRanges);
-  }, [transformation, config]);
-  ```
-
-- [x] **Update parent component with range values**
-  ```jsx
-  // Update parent when ranges change
-  useEffect(() => {
-    const newConfig = {
-      enabled,
-      ...parameters, // Keep single values for backward compatibility
-      ranges: parameterRanges // Add ranges
-    };
-    onChange(newConfig);
-  }, [enabled, parameters, parameterRanges, onChange]);
-  ```
-
-##### 1.3 Update renderParameterControl Function
-- [x] **Modify to support both single values and ranges**
-  ```jsx
-  // In renderParameterControl function
-  const renderParameterControl = (paramKey, paramDef) => {
-    // Check if range mode is enabled for this parameter
-    const isRangeMode = rangeEnabledParams.includes(paramKey);
-    
-    if (isRangeMode) {
-      return renderRangeSlider(paramKey, paramDef);
+    // For rotation, flip the sign
+    if (paramKey === 'rotation') {
+      return -positiveValue;
     }
     
-    // Existing single-value control code...
+    // For parameters with min/max ranges, calculate opposite position in range
+    const range = paramDef.max - paramDef.min;
+    const position = (positiveValue - paramDef.min) / range;
+    return paramDef.max - (position * range);
   };
   ```
 
-- [x] **Add toggle to switch between single value and range**
+- [x] **Update parent component with single values**
+  ```jsx
+  // Update parent when parameters change
+  useEffect(() => {
+    const newConfig = {
+      enabled,
+      ...parameters,
+      // Add metadata about auto-generated values for backend
+      autoGenerateNegative: true
+    };
+    onChange(newConfig);
+  }, [enabled, parameters, onChange]);
+  ```
+
+##### 1.3 Update renderParameterControl Function
+- [x] **Modify to use single slider with auto-generation info**
+  ```jsx
+  // In renderParameterControl function
+  const renderParameterControl = (paramKey, paramDef) => {
+    // Always use single slider with auto-generation
+    return renderSingleSlider(paramKey, paramDef);
+  };
+  ```
+
+- [x] **Add info tooltip about auto-generation**
   ```jsx
   <div style={{ 
     display: 'flex', 
@@ -577,13 +577,12 @@ For `images_per_original = N`, use this sequence:
       {paramKey.charAt(0).toUpperCase() + paramKey.slice(1)}
     </span>
     <Space>
-      <span style={{ fontSize: '10px', color: '#999' }}>Range</span>
-      <Switch
-        size="small"
-        checked={rangeEnabledParams.includes(paramKey)}
-        onChange={(checked) => toggleRangeMode(paramKey, checked)}
-        disabled={!enabled}
-      />
+      <Tooltip title="System will automatically generate both positive and negative values">
+        <InfoCircleOutlined style={{ fontSize: '12px', color: '#1890ff' }} />
+      </Tooltip>
+      <span style={{ fontSize: '10px', color: '#999' }}>
+        Auto-generates negative values
+      </span>
     </Space>
   </div>
   ```
@@ -596,23 +595,16 @@ For `images_per_original = N`, use this sequence:
   // Calculate combination count whenever parameters change
   useEffect(() => {
     const calculateCombinations = () => {
-      let count = 1;
+      // For each enabled transformation, we'll have:
+      // 1 original + 1 positive + 1 negative = 3 images per transformation
       
-      // For each transformation
-      existingTransformations.forEach(transformation => {
-        const config = transformation.config || {};
-        const ranges = config.ranges || {};
-        
-        // For each parameter with range enabled
-        Object.entries(ranges).forEach(([paramKey, range]) => {
-          if (config.enabled && range[0] !== range[1]) {
-            const paramDef = getParameterDefinition(transformation.type, paramKey);
-            const step = paramDef?.step || 0.1;
-            const possibleValues = Math.ceil((range[1] - range[0]) / step) + 1;
-            count *= possibleValues;
-          }
-        });
-      });
+      // Count enabled transformations
+      const enabledTransformations = existingTransformations.filter(
+        transformation => transformation.config?.enabled
+      );
+      
+      // Formula: 1 original + (2 * number of enabled transformations)
+      const count = 1 + (enabledTransformations.length * 2);
       
       setCombinationCount(count);
     };
@@ -621,15 +613,16 @@ For `images_per_original = N`, use this sequence:
   }, [existingTransformations]);
   ```
 
-- [ ] **Display the count in the UI**
+- [x] **Display the count in the UI**
   ```jsx
   <div className="combination-counter" style={{ marginTop: 16, textAlign: 'center' }}>
     <Alert
-      type={combinationCount > 100 ? "warning" : "info"}
+      type="info"
       message={
         <span>
-          <strong>{combinationCount}</strong> possible combinations
-          {combinationCount > 100 && " (consider reducing ranges)"}
+          <strong>{combinationCount}</strong> images will be generated per original
+          <br/>
+          <small>(1 original + {combinationCount - 1} augmented images)</small>
         </span>
       }
       showIcon
@@ -741,102 +734,91 @@ For `images_per_original = N`, use this sequence:
 
 #### 📋 Sub-Tasks:
 
-##### 3.1 Create Schema.py with Range-to-Values Converter
-- [ ] **Implement function to generate values from range**
+##### 3.1 Create Schema.py with Auto-Generation Logic
+- [ ] **Implement function to generate negative values from positive ones**
   ```python
   # In schema.py
-  def generate_values_from_range(min_val, max_val, step, count=None):
+  def generate_negative_value(param_name, positive_value, param_def):
       """
-      Generate a list of values from a range.
+      Generate negative/opposite value from a positive value.
       
       Args:
-          min_val: Minimum value
-          max_val: Maximum value
-          step: Step size
-          count: Number of values to generate (if None, use step)
+          param_name: Parameter name (e.g., 'brightness', 'rotation')
+          positive_value: The positive value set by user
+          param_def: Parameter definition with min/max/default values
           
       Returns:
-          List of values within the range
+          The corresponding negative/opposite value
       """
-      if min_val == max_val:
-          return [min_val]  # Single value case
-          
-      if count is None:
-          # Generate all possible values based on step
-          values = []
-          current = min_val
-          while current <= max_val:
-              values.append(round(current, 6))  # Round to avoid floating point issues
-              current += step
-          return values
-      else:
-          # Generate exactly count values evenly distributed
-          if count == 1:
-              return [(min_val + max_val) / 2]  # Middle value
-          
-          step_size = (max_val - min_val) / (count - 1)
-          return [round(min_val + i * step_size, 6) for i in range(count)]
+      # For parameters with a "normal" or "neutral" value
+      if param_name in ['brightness', 'contrast']:
+          normal_value = 1.0
+          # If value is greater than normal, calculate symmetric negative
+          if positive_value > normal_value:
+              difference = positive_value - normal_value
+              return max(param_def.get('min', 0.5), normal_value - difference)
+          # If value is less than normal, calculate symmetric positive
+          elif positive_value < normal_value:
+              difference = normal_value - positive_value
+              return min(param_def.get('max', 1.5), normal_value + difference)
+          return normal_value  # Return normal value if equal to normal
+      
+      # For rotation, flip the sign
+      if param_name == 'rotation':
+          return -positive_value
+      
+      # For parameters with min/max ranges, calculate opposite position in range
+      min_val = param_def.get('min', 0)
+      max_val = param_def.get('max', 1)
+      range_size = max_val - min_val
+      position = (positive_value - min_val) / range_size
+      return max_val - (position * range_size)
   ```
 
 ##### 3.2 Implement Combination Generator
-- [ ] **Create function to generate combinations**
+- [ ] **Create function to generate positive/negative combinations**
   ```python
   # In schema.py
-  import itertools
-  
-  def generate_combinations(parameter_ranges, tool_definitions, max_combinations=None):
+  def generate_combinations(transformation_configs, tool_definitions):
       """
-      Generate combinations of parameter values from ranges.
+      Generate combinations of parameter values with positive and negative values.
       
       Args:
-          parameter_ranges: Dict of parameter ranges
-          tool_definitions: Dict of tool definitions with step sizes
-          max_combinations: Maximum number of combinations to generate
+          transformation_configs: Dict of transformation configurations
+          tool_definitions: Dict of tool definitions with parameter definitions
           
       Returns:
           List of parameter combinations
       """
-      # For each enabled parameter, generate value list
-      parameter_values = {}
-      for tool_name, tool_config in parameter_ranges.items():
-          if tool_config.get("enabled", False):
-              for param_name, range_config in tool_config.get("ranges", {}).items():
-                  if range_config[0] != range_config[1]:  # Only if it's a real range
-                      step = get_step_for_parameter(tool_definitions, tool_name, param_name)
-                      values = generate_values_from_range(
-                          range_config[0],
-                          range_config[1],
-                          step
-                      )
-                      parameter_values[f"{tool_name}.{param_name}"] = values
-                  else:
-                      # Use single value if min == max
-                      parameter_values[f"{tool_name}.{param_name}"] = [range_config[0]]
-          else:
-              # Skip disabled tools
+      # Start with original (no transformations)
+      result = [{}]  # Empty dict represents original image
+      
+      # For each enabled transformation, generate positive and negative configs
+      for tool_name, tool_config in transformation_configs.items():
+          if not tool_config.get("enabled", False):
               continue
-      
-      # Generate all combinations using itertools.product
-      all_names = list(parameter_values.keys())
-      all_values = [parameter_values[name] for name in all_names]
-      
-      all_combinations = list(itertools.product(*all_values))
-      
-      # Convert to list of dicts
-      result = []
-      for combo in all_combinations:
-          combo_dict = {}
-          for i, name in enumerate(all_names):
-              tool_name, param_name = name.split(".")
-              if tool_name not in combo_dict:
-                  combo_dict[tool_name] = {}
-              combo_dict[tool_name][param_name] = combo[i]
-          result.append(combo_dict)
-      
-      # Limit to max_combinations if specified
-      if max_combinations and len(result) > max_combinations:
-          # Implement smart sampling strategy
-          return smart_sample_combinations(result, max_combinations)
+              
+          # Get parameter values
+          params = tool_config.get("parameters", {})
+          
+          # Create positive configuration (user-set values)
+          positive_config = {
+              tool_name: {
+                  param_name: value 
+                  for param_name, value in params.items()
+              }
+          }
+          
+          # Create negative configuration (auto-generated values)
+          negative_config = {tool_name: {}}
+          for param_name, value in params.items():
+              param_def = get_parameter_definition(tool_definitions, tool_name, param_name)
+              negative_value = generate_negative_value(param_name, value, param_def)
+              negative_config[tool_name][param_name] = negative_value
+          
+          # Add both configurations to result
+          result.append(positive_config)
+          result.append(negative_config)
       
       return result
   ```
@@ -845,71 +827,70 @@ For `images_per_original = N`, use this sequence:
 - [ ] **Create function to calculate total possible combinations**
   ```python
   # In schema.py
-  def calculate_total_combinations(parameter_ranges, tool_definitions):
+  def calculate_total_combinations(transformation_configs):
       """
       Calculate the total number of possible combinations.
       
       Args:
-          parameter_ranges: Dict of parameter ranges
-          tool_definitions: Dict of tool definitions with step sizes
+          transformation_configs: Dict of transformation configurations
           
       Returns:
           Total number of possible combinations
       """
-      total = 1
-      for tool_name, tool_config in parameter_ranges.items():
+      # Count enabled transformations
+      enabled_count = 0
+      for tool_config in transformation_configs.values():
           if tool_config.get("enabled", False):
-              for param_name, range_config in tool_config.get("ranges", {}).items():
-                  if range_config[0] != range_config[1]:  # Only if it's a real range
-                      min_val = range_config[0]
-                      max_val = range_config[1]
-                      step = get_step_for_parameter(tool_definitions, tool_name, param_name)
-                      
-                      # Calculate number of possible values for this parameter
-                      num_values = max(1, int(round((max_val - min_val) / step)) + 1)
-                      
-                      # Multiply by total
-                      total *= num_values
+              enabled_count += 1
+      
+      # Formula: 1 original + (2 * number of enabled transformations)
+      # 1 original + 1 positive + 1 negative per transformation
+      total = 1 + (enabled_count * 2)
       
       return total
   ```
 
-##### 3.4 Implement Smart Sampling Strategy
-- [ ] **Create function for intelligent sampling**
+##### 3.4 Implement Combination Selection Logic
+- [ ] **Create function to select combinations based on images_per_original**
   ```python
   # In schema.py
-  def smart_sample_combinations(combinations, max_samples):
+  def select_combinations(all_combinations, images_per_original):
       """
-      Intelligently sample combinations to ensure good coverage.
+      Select combinations based on images_per_original parameter.
       
       Args:
-          combinations: List of all combinations
-          max_samples: Maximum number of samples to return
+          all_combinations: List of all generated combinations
+          images_per_original: Number of images to generate per original
           
       Returns:
-          Sampled combinations
+          Selected combinations
       """
-      if len(combinations) <= max_samples:
-          return combinations
+      if len(all_combinations) <= images_per_original:
+          return all_combinations
           
-      # Always include first and last combination (min and max values)
-      result = [combinations[0], combinations[-1]]
+      # Always include original image (empty config)
+      result = [all_combinations[0]]  # First item is original (empty config)
       
-      # Include middle combination
-      middle_idx = len(combinations) // 2
-      result.append(combinations[middle_idx])
+      # Prioritize single-transformation configs (positive and negative)
+      single_transformations = [
+          combo for combo in all_combinations[1:]  # Skip original
+          if len(combo) == 1  # Only one tool applied
+      ]
       
-      # Randomly sample the rest
-      import random
-      remaining = max_samples - len(result)
+      # Add as many single transformations as possible
+      result.extend(single_transformations[:images_per_original - 1])
       
-      # Remove already selected combinations
-      available = [c for i, c in enumerate(combinations) 
-                  if i != 0 and i != len(combinations) - 1 and i != middle_idx]
-      
-      # Random sample without replacement
-      if remaining > 0 and available:
-          result.extend(random.sample(available, min(remaining, len(available))))
+      # If we still have room and there are combo transformations, add those
+      if len(result) < images_per_original:
+          # Get combo transformations (more than one tool)
+          combo_transformations = [
+              combo for combo in all_combinations[1:]  # Skip original
+              if len(combo) > 1  # Multiple tools applied
+          ]
+          
+          # Add combo transformations up to the limit
+          remaining = images_per_original - len(result)
+          result.extend(combo_transformations[:remaining])
       
       return result
   ```
@@ -922,24 +903,23 @@ For `images_per_original = N`, use this sequence:
   
   @router.get("/releases/versions/{version_id}/combinations")
   async def get_combination_count(version_id: int):
-      # Load transformation ranges for this version
-      transformation = await load_transformation(version_id)
+      # Load transformation configurations for this version
+      transformations = await load_transformations(version_id)
       
-      # Get tool definitions
-      tool_definitions = await load_tool_definitions()
+      # Calculate combination count using 2N+1 formula
+      count = calculate_total_combinations(transformations)
       
-      # Parse parameter ranges
-      parameter_ranges = json.loads(transformation.parameter_ranges) if transformation.parameter_ranges else {}
+      # Calculate recommended max (same as count since we use fixed formula)
+      max_recommended = count
       
-      # Calculate combination count
-      count = calculate_total_combinations(parameter_ranges, tool_definitions)
-      
-      # Calculate recommended max (limit to reasonable number)
-      max_recommended = min(count, 10)
+      # Calculate minimum required (must be at least count)
+      min_required = count
       
       return {
           "count": count, 
-          "max_recommended": max_recommended
+          "max_recommended": max_recommended,
+          "min_required": min_required,
+          "formula": "1 original + (2 × enabled transformations)"
       }
   ```
 
