@@ -108,6 +108,19 @@ For `images_per_original = N`, use this sequence:
 8. **🎛️ Simplified UI**: User only needs to set one value per tool
 9. **🔄 Automatic Range**: System intelligently generates negative values from positive ones
 
+#### **🛠️ SUITABLE TRANSFORMATION TOOLS:**
+| Tool | Positive Value Effect | Negative Value Effect | Neutral Value |
+|------|----------------------|----------------------|---------------|
+| **Rotation** | Clockwise rotation (e.g., +15°) | Counter-clockwise rotation (e.g., -15°) | 0° |
+| **Brightness** | Brighter image (e.g., 1.2 = +20%) | Darker image (e.g., 0.8 = -20%) | 1.0 |
+| **Contrast** | Increased contrast (e.g., 1.2 = +20%) | Decreased contrast (e.g., 0.8 = -20%) | 1.0 |
+| **Hue Shift** | Shift colors clockwise (e.g., +30°) | Shift colors counter-clockwise (e.g., -30°) | 0° |
+| **Saturation** | More saturated colors (e.g., 1.3 = +30%) | Less saturated colors (e.g., 0.7 = -30%) | 1.0 |
+| **Shear** | Shear in one direction (e.g., +10°) | Shear in opposite direction (e.g., -10°) | 0° |
+| **Gamma** | Gamma > 1.0 (darkens mid-tones) | Gamma < 1.0 (brightens mid-tones) | 1.0 |
+
+**Note**: Tools like Blur, Noise, Resize, Crop, Equalize, and Grayscale are not suitable for negative values as they don't have natural opposites.
+
 ---
 
 ## 🚨 **CRITICAL IMPLEMENTATION STATUS & TESTING REQUIREMENTS**
@@ -751,7 +764,7 @@ For `images_per_original = N`, use this sequence:
           The corresponding negative/opposite value
       """
       # For parameters with a "normal" or "neutral" value
-      if param_name in ['brightness', 'contrast']:
+      if param_name in ['brightness', 'contrast', 'saturation']:
           normal_value = 1.0
           # If value is greater than normal, calculate symmetric negative
           if positive_value > normal_value:
@@ -763,9 +776,22 @@ For `images_per_original = N`, use this sequence:
               return min(param_def.get('max', 1.5), normal_value + difference)
           return normal_value  # Return normal value if equal to normal
       
-      # For rotation, flip the sign
-      if param_name == 'rotation':
+      # For rotation, hue, and shear, flip the sign
+      if param_name in ['rotation', 'hue', 'angle']:
           return -positive_value
+      
+      # For gamma, calculate inverse around 1.0
+      if param_name == 'gamma':
+          if positive_value == 1.0:
+              return 1.0
+          elif positive_value > 1.0:
+              # If gamma is 2.0, inverse would be 0.5 (1.0/2.0)
+              inverse = 1.0 / positive_value
+              return max(param_def.get('min', 0.1), inverse)
+          else:
+              # If gamma is 0.5, inverse would be 2.0 (1.0/0.5)
+              inverse = 1.0 / positive_value
+              return min(param_def.get('max', 5.0), inverse)
       
       # For parameters with min/max ranges, calculate opposite position in range
       min_val = param_def.get('min', 0)
