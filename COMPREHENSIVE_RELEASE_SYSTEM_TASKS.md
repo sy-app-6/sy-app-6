@@ -2,7 +2,7 @@
 
 ## 📋 OVERVIEW
 
-This document provides a comprehensive task breakdown for implementing the Release System with two-point slider functionality, tracking both completed and pending tasks.
+This document provides a comprehensive task breakdown for implementing the Release System with single-slider functionality that auto-generates negative values, tracking both completed and pending tasks.
 
 **Current Status**: 🔄 IN PROGRESS
 **Priority**: 🔴 HIGH
