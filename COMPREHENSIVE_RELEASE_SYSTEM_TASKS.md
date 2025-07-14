@@ -766,39 +766,46 @@ For `images_per_original = N`, use this sequence:
       # For parameters with a "normal" or "neutral" value
       if param_name in ['brightness', 'contrast', 'saturation']:
           normal_value = 1.0
-          # If value is greater than normal, calculate symmetric negative
+          # Calculate the exact same deviation but in opposite direction
+          deviation = abs(positive_value - normal_value)
           if positive_value > normal_value:
-              difference = positive_value - normal_value
-              return max(param_def.get('min', 0.5), normal_value - difference)
-          # If value is less than normal, calculate symmetric positive
+              return normal_value - deviation
           elif positive_value < normal_value:
-              difference = normal_value - positive_value
-              return min(param_def.get('max', 1.5), normal_value + difference)
+              return normal_value + deviation
           return normal_value  # Return normal value if equal to normal
       
-      # For rotation, hue, and shear, flip the sign
+      # For rotation, hue, and shear, simply flip the sign
       if param_name in ['rotation', 'hue', 'angle']:
           return -positive_value
       
-      # For gamma, calculate inverse around 1.0
+      # For gamma, use the same deviation from 1.0
       if param_name == 'gamma':
-          if positive_value == 1.0:
-              return 1.0
-          elif positive_value > 1.0:
-              # If gamma is 2.0, inverse would be 0.5 (1.0/2.0)
-              inverse = 1.0 / positive_value
-              return max(param_def.get('min', 0.1), inverse)
+          normal_value = 1.0
+          if positive_value == normal_value:
+              return normal_value
+          
+          # If positive value is 2.0 (1.0 + 1.0), negative would be 0.0 (1.0 - 1.0)
+          # If positive value is 0.7 (1.0 - 0.3), negative would be 1.3 (1.0 + 0.3)
+          deviation = abs(positive_value - normal_value)
+          if positive_value > normal_value:
+              return normal_value - deviation
           else:
-              # If gamma is 0.5, inverse would be 2.0 (1.0/0.5)
-              inverse = 1.0 / positive_value
-              return min(param_def.get('max', 5.0), inverse)
+              return normal_value + deviation
       
-      # For parameters with min/max ranges, calculate opposite position in range
+      # For other parameters, use the same distance from midpoint but in opposite direction
       min_val = param_def.get('min', 0)
       max_val = param_def.get('max', 1)
-      range_size = max_val - min_val
-      position = (positive_value - min_val) / range_size
-      return max_val - (position * range_size)
+      midpoint = (min_val + max_val) / 2
+      
+      # Calculate distance from midpoint
+      distance = abs(positive_value - midpoint)
+      
+      # Return opposite point with same distance
+      if positive_value > midpoint:
+          return midpoint - distance
+      elif positive_value < midpoint:
+          return midpoint + distance
+      return midpoint  # Return midpoint if equal to midpoint
   ```
 
 ##### 3.2 Implement Combination Generator
