@@ -15,6 +15,12 @@ from database import operations as crud
 from database.models import Dataset
 from utils.augmentation_utils import AdvancedDataAugmentation
 from core.config import settings
+from core.transformation_config import (
+    get_shear_parameters, get_rotation_parameters,
+    get_brightness_parameters, get_contrast_parameters,
+    get_blur_parameters, get_hue_parameters,
+    get_saturation_parameters, get_gamma_parameters
+)
 
 router = APIRouter(prefix="/api/augmentation", tags=["augmentation"])
 
@@ -348,8 +354,18 @@ async def get_available_transformations():
                     "description": "Rotate images by specified angles",
                     "icon": "redo",
                     "parameters": {
-                        "angle_min": {"type": "number", "min": -180, "max": 180, "default": -15},
-                        "angle_max": {"type": "number", "min": -180, "max": 180, "default": 15},
+                        "angle_min": {
+                            "type": "number", 
+                            "min": get_rotation_parameters()['min'], 
+                            "max": get_rotation_parameters()['max'], 
+                            "default": get_rotation_parameters()['min'] / 12
+                        },
+                        "angle_max": {
+                            "type": "number", 
+                            "min": get_rotation_parameters()['min'], 
+                            "max": get_rotation_parameters()['max'], 
+                            "default": get_rotation_parameters()['max'] / 12
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.5, "step": 0.1}
                     }
                 },
@@ -379,8 +395,18 @@ async def get_available_transformations():
                     "description": "Adjust image brightness",
                     "icon": "sun",
                     "parameters": {
-                        "min_factor": {"type": "number", "min": 0.1, "max": 2, "default": 0.8, "step": 0.1},
-                        "max_factor": {"type": "number", "min": 0.1, "max": 2, "default": 1.2, "step": 0.1},
+                        "min_factor": {
+                            "type": "number", 
+                            "min": get_brightness_parameters()['min'], 
+                            "max": get_brightness_parameters()['max'], 
+                            "default": get_brightness_parameters()['min'] / 2 + 0.5
+                        },
+                        "max_factor": {
+                            "type": "number", 
+                            "min": get_brightness_parameters()['min'], 
+                            "max": get_brightness_parameters()['max'], 
+                            "default": get_brightness_parameters()['max'] / 2 + 0.5
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.5, "step": 0.1}
                     }
                 },
@@ -389,8 +415,18 @@ async def get_available_transformations():
                     "description": "Adjust image contrast",
                     "icon": "adjust",
                     "parameters": {
-                        "min_factor": {"type": "number", "min": 0.1, "max": 2, "default": 0.8, "step": 0.1},
-                        "max_factor": {"type": "number", "min": 0.1, "max": 2, "default": 1.2, "step": 0.1},
+                        "min_factor": {
+                            "type": "number", 
+                            "min": get_contrast_parameters()['min'], 
+                            "max": get_contrast_parameters()['max'], 
+                            "default": get_contrast_parameters()['min'] / 2 + 0.5
+                        },
+                        "max_factor": {
+                            "type": "number", 
+                            "min": get_contrast_parameters()['min'], 
+                            "max": get_contrast_parameters()['max'], 
+                            "default": get_contrast_parameters()['max'] / 2 + 0.5
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.5, "step": 0.1}
                     }
                 },
@@ -399,8 +435,20 @@ async def get_available_transformations():
                     "description": "Apply gaussian blur to images",
                     "icon": "circle",
                     "parameters": {
-                        "kernel_min": {"type": "number", "min": 1, "max": 15, "default": 3, "step": 2},
-                        "kernel_max": {"type": "number", "min": 1, "max": 15, "default": 7, "step": 2},
+                        "kernel_min": {
+                            "type": "number", 
+                            "min": get_blur_parameters()['min'], 
+                            "max": get_blur_parameters()['max'], 
+                            "default": get_blur_parameters()['min'] + 2,
+                            "step": 2
+                        },
+                        "kernel_max": {
+                            "type": "number", 
+                            "min": get_blur_parameters()['min'], 
+                            "max": get_blur_parameters()['max'], 
+                            "default": get_blur_parameters()['max'] / 2,
+                            "step": 2
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.3, "step": 0.1}
                     }
                 },
@@ -421,10 +469,34 @@ async def get_available_transformations():
                     "description": "Randomly change brightness, contrast, saturation and hue",
                     "icon": "palette",
                     "parameters": {
-                        "brightness": {"type": "number", "min": 0, "max": 0.5, "default": 0.2, "step": 0.1},
-                        "contrast": {"type": "number", "min": 0, "max": 0.5, "default": 0.2, "step": 0.1},
-                        "saturation": {"type": "number", "min": 0, "max": 0.5, "default": 0.2, "step": 0.1},
-                        "hue": {"type": "number", "min": 0, "max": 0.2, "default": 0.1, "step": 0.05},
+                        "brightness": {
+                            "type": "number", 
+                            "min": 0, 
+                            "max": get_brightness_parameters()['max'] / 2, 
+                            "default": get_brightness_parameters()['max'] / 5, 
+                            "step": 0.1
+                        },
+                        "contrast": {
+                            "type": "number", 
+                            "min": 0, 
+                            "max": get_contrast_parameters()['max'] / 2, 
+                            "default": get_contrast_parameters()['max'] / 5, 
+                            "step": 0.1
+                        },
+                        "saturation": {
+                            "type": "number", 
+                            "min": 0, 
+                            "max": get_saturation_parameters()['max'] / 2, 
+                            "default": get_saturation_parameters()['max'] / 5, 
+                            "step": 0.1
+                        },
+                        "hue": {
+                            "type": "number", 
+                            "min": 0, 
+                            "max": get_hue_parameters()['max'] / 2, 
+                            "default": get_hue_parameters()['max'] / 4, 
+                            "step": 0.05
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.3, "step": 0.1}
                     }
                 },
@@ -484,8 +556,18 @@ async def get_available_transformations():
                     "description": "Apply shear transformation",
                     "icon": "italic",
                     "parameters": {
-                        "shear_min": {"type": "number", "min": -15, "max": 15, "default": -5},
-                        "shear_max": {"type": "number", "min": -15, "max": 15, "default": 5},
+                        "shear_min": {
+                            "type": "number", 
+                            "min": get_shear_parameters()['min'], 
+                            "max": get_shear_parameters()['max'], 
+                            "default": get_shear_parameters()['min'] / 3
+                        },
+                        "shear_max": {
+                            "type": "number", 
+                            "min": get_shear_parameters()['min'], 
+                            "max": get_shear_parameters()['max'], 
+                            "default": get_shear_parameters()['max'] / 3
+                        },
                         "probability": {"type": "number", "min": 0, "max": 1, "default": 0.3, "step": 0.1}
                     }
                 },
@@ -587,11 +669,31 @@ async def get_transformation_presets_new():
                 "description": "Balanced transformations for most use cases",
                 "icon": "balance-scale",
                 "transformations": {
-                    "rotation": {"enabled": True, "angle_min": -15, "angle_max": 15, "probability": 0.5},
+                    "rotation": {
+                        "enabled": True, 
+                        "angle_min": get_rotation_parameters()['min'] / 12, 
+                        "angle_max": get_rotation_parameters()['max'] / 12, 
+                        "probability": 0.5
+                    },
                     "flip": {"horizontal": True, "vertical": False, "h_probability": 0.5, "v_probability": 0.2},
-                    "brightness": {"enabled": True, "min_factor": 0.8, "max_factor": 1.2, "probability": 0.5},
-                    "contrast": {"enabled": True, "min_factor": 0.8, "max_factor": 1.2, "probability": 0.5},
-                    "blur": {"enabled": True, "kernel_min": 3, "kernel_max": 7, "probability": 0.3},
+                    "brightness": {
+                        "enabled": True, 
+                        "min_factor": get_brightness_parameters()['min'] / 2 + 0.5, 
+                        "max_factor": get_brightness_parameters()['max'] / 2 + 0.5, 
+                        "probability": 0.5
+                    },
+                    "contrast": {
+                        "enabled": True, 
+                        "min_factor": get_contrast_parameters()['min'] / 2 + 0.5, 
+                        "max_factor": get_contrast_parameters()['max'] / 2 + 0.5, 
+                        "probability": 0.5
+                    },
+                    "blur": {
+                        "enabled": True, 
+                        "kernel_min": get_blur_parameters()['min'] + 2, 
+                        "kernel_max": get_blur_parameters()['max'] / 2, 
+                        "probability": 0.3
+                    },
                     "noise": {"enabled": True, "std_min": 0.01, "std_max": 0.03, "probability": 0.3},
                     "crop": {"enabled": True, "scale_min": 0.8, "scale_max": 1.0, "probability": 0.4}
                 }

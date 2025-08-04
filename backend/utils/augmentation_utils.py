@@ -12,6 +12,21 @@ from typing import List, Dict, Tuple, Optional, Any
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import json
+import sys
+import os
+
+# Add the backend directory to the path to import core modules
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+# Import central configuration
+from core.transformation_config import (
+    get_shear_parameters, get_rotation_parameters,
+    get_brightness_parameters, get_contrast_parameters,
+    get_blur_parameters, get_hue_parameters,
+    get_saturation_parameters, get_gamma_parameters
+)
 
 
 class AdvancedDataAugmentation:
@@ -374,7 +389,7 @@ class AdvancedDataAugmentation:
             # Geometric transformations
             "rotation": {
                 "enabled": True,
-                "range": [-15, 15],
+                "range": [get_rotation_parameters()['min'], get_rotation_parameters()['max']],
                 "probability": 0.5
             },
             "flip": {
@@ -385,7 +400,7 @@ class AdvancedDataAugmentation:
             },
             "shear": {
                 "enabled": True,
-                "range": [-5, 5],
+                "range": [get_shear_parameters()['min'], get_shear_parameters()['max']],
                 "probability": 0.3
             },
             "perspective": {
@@ -415,27 +430,27 @@ class AdvancedDataAugmentation:
             # Color transformations
             "brightness": {
                 "enabled": True,
-                "range": [0.8, 1.2],
+                "range": [get_brightness_parameters()['min'], get_brightness_parameters()['max']],
                 "probability": 0.5
             },
             "contrast": {
                 "enabled": True,
-                "range": [0.8, 1.2],
+                "range": [get_contrast_parameters()['min'], get_contrast_parameters()['max']],
                 "probability": 0.5
             },
             "saturation": {
                 "enabled": True,
-                "range": [0.8, 1.2],
+                "range": [get_saturation_parameters()['min'], get_saturation_parameters()['max']],
                 "probability": 0.5
             },
             "hue": {
                 "enabled": True,
-                "range": [-0.1, 0.1],
+                "range": [get_hue_parameters()['min'], get_hue_parameters()['max']],
                 "probability": 0.5
             },
             "gamma": {
                 "enabled": False,
-                "range": [0.8, 1.2],
+                "range": [get_gamma_parameters()['min'], get_gamma_parameters()['max']],
                 "probability": 0.3
             },
             "channel_shuffle": {
@@ -450,17 +465,17 @@ class AdvancedDataAugmentation:
             # Noise and blur
             "gaussian_blur": {
                 "enabled": True,
-                "kernel_size": [3, 7],
+                "kernel_size": [get_blur_parameters()['min'], get_blur_parameters()['max']],
                 "probability": 0.3
             },
             "motion_blur": {
                 "enabled": False,
-                "blur_limit": 7,
+                "blur_limit": get_blur_parameters()['max'],
                 "probability": 0.2
             },
             "median_blur": {
                 "enabled": False,
-                "blur_limit": 7,
+                "blur_limit": get_blur_parameters()['max'],
                 "probability": 0.2
             },
             "gaussian_noise": {
@@ -572,24 +587,24 @@ class AdvancedDataAugmentation:
                 "advanced_distortions": True
             },
             "geometric_only": {
-                "rotation": {"enabled": True, "range": [-15, 15], "probability": 0.5},
+                "rotation": {"enabled": True, "range": [get_rotation_parameters()['min'], get_rotation_parameters()['max']], "probability": 0.5},
                 "flip": {"horizontal": True, "vertical": True, "h_probability": 0.5, "v_probability": 0.3},
-                "shear": {"enabled": True, "range": [-10, 10], "probability": 0.4},
+                "shear": {"enabled": True, "range": [get_shear_parameters()['min'], get_shear_parameters()['max']], "probability": 0.4},
                 "perspective": {"enabled": True, "distortion": 0.15, "probability": 0.4},
                 "crop": {"enabled": True, "scale": [0.7, 1.0], "probability": 0.6},
                 "zoom": {"enabled": True, "range": [0.8, 1.2], "probability": 0.4}
             },
             "color_only": {
-                "brightness": {"enabled": True, "range": [0.7, 1.3], "probability": 0.6},
-                "contrast": {"enabled": True, "range": [0.7, 1.3], "probability": 0.6},
-                "saturation": {"enabled": True, "range": [0.7, 1.3], "probability": 0.6},
-                "hue": {"enabled": True, "range": [-0.2, 0.2], "probability": 0.6},
-                "gamma": {"enabled": True, "range": [0.7, 1.3], "probability": 0.4},
+                "brightness": {"enabled": True, "range": [get_brightness_parameters()['min'], get_brightness_parameters()['max']], "probability": 0.6},
+                "contrast": {"enabled": True, "range": [get_contrast_parameters()['min'], get_contrast_parameters()['max']], "probability": 0.6},
+                "saturation": {"enabled": True, "range": [get_saturation_parameters()['min'], get_saturation_parameters()['max']], "probability": 0.6},
+                "hue": {"enabled": True, "range": [get_hue_parameters()['min'], get_hue_parameters()['max']], "probability": 0.6},
+                "gamma": {"enabled": True, "range": [get_gamma_parameters()['min'], get_gamma_parameters()['max']], "probability": 0.4},
                 "color_jitter": {"enabled": True, "probability": 0.5}
             },
             "noise_blur": {
-                "gaussian_blur": {"enabled": True, "kernel_size": [3, 11], "probability": 0.5},
-                "motion_blur": {"enabled": True, "blur_limit": 15, "probability": 0.4},
+                "gaussian_blur": {"enabled": True, "kernel_size": [get_blur_parameters()['min'], get_blur_parameters()['max']], "probability": 0.5},
+                "motion_blur": {"enabled": True, "blur_limit": get_blur_parameters()['max'], "probability": 0.4},
                 "gaussian_noise": {"enabled": True, "std": [0.01, 0.1], "probability": 0.5},
                 "iso_noise": {"enabled": True, "probability": 0.3},
                 "jpeg_compression": {"enabled": True, "quality_range": [30, 100], "probability": 0.4}

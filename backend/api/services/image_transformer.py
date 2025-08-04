@@ -10,6 +10,22 @@ import random
 import math
 from typing import Dict, Any, List, Tuple, Optional
 import logging
+import sys
+import os
+
+# Add the backend directory to the path to import core modules
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+# Import central configuration
+from core.transformation_config import (
+    get_shear_parameters, get_rotation_parameters,
+    get_brightness_parameters, get_contrast_parameters,
+    get_blur_parameters, get_hue_parameters,
+    get_saturation_parameters, get_gamma_parameters,
+    get_resize_parameters
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +35,16 @@ class ImageTransformer:
     """
     
     def __init__(self):
+        # Helper methods to get transformation parameters from central config
+        self._get_shear_params = get_shear_parameters
+        self._get_rotation_params = get_rotation_parameters
+        self._get_brightness_params = get_brightness_parameters
+        self._get_contrast_params = get_contrast_parameters
+        self._get_blur_params = get_blur_parameters
+        self._get_hue_params = get_hue_parameters
+        self._get_saturation_params = get_saturation_parameters
+        self._get_gamma_params = get_gamma_parameters
+        self._get_resize_params = get_resize_parameters
         self.transformation_methods = {
             # Basic transformations
             'resize': self._apply_resize,
@@ -84,8 +110,20 @@ class ImageTransformer:
                 'name': 'Resize',
                 'category': 'basic',
                 'parameters': {
-                    'width': {'type': 'int', 'min': 64, 'max': 4096, 'default': 640, 'placeholder': 'Width (e.g. 640)'},
-                    'height': {'type': 'int', 'min': 64, 'max': 4096, 'default': 640, 'placeholder': 'Height (e.g. 640)'},
+                    'width': {
+                        'type': 'int', 
+                        'min': self._get_resize_params()['width']['min'], 
+                        'max': self._get_resize_params()['width']['max'], 
+                        'default': self._get_resize_params()['width']['default'], 
+                        'placeholder': 'Width (e.g. 640)'
+                    },
+                    'height': {
+                        'type': 'int', 
+                        'min': self._get_resize_params()['height']['min'], 
+                        'max': self._get_resize_params()['height']['max'], 
+                        'default': self._get_resize_params()['height']['default'], 
+                        'placeholder': 'Height (e.g. 640)'
+                    },
                     'resize_mode': {
                         'type': 'select', 
                         'options': [
@@ -142,11 +180,11 @@ class ImageTransformer:
                 'parameters': {
                     'angle': {
                         'type': 'float', 
-                        'min': -180, 
-                        'max': 180, 
-                        'default': 0,
+                        'min': self._get_rotation_params()['min'], 
+                        'max': self._get_rotation_params()['max'], 
+                        'default': self._get_rotation_params()['default'],
                         'unit': 'degrees',
-                        'step': 0.1,
+                        'step': self._get_rotation_params()['step'],
                         'description': 'Rotation angle in degrees'
                     },
                     'fill_color': {'type': 'select', 'options': ['white', 'black'], 'default': 'white'}
@@ -194,13 +232,13 @@ class ImageTransformer:
                 'category': 'basic',
                 'parameters': {
                     'adjustment': {
-                        'type': 'int', 
-                        'min': -50, 
-                        'max': 50, 
-                        'default': 0,
-                        'unit': 'percent',
-                        'step': 1,
-                        'description': 'Brightness adjustment (-50% darker to +50% brighter)'
+                        'type': 'float', 
+                        'min': self._get_brightness_params()['min'], 
+                        'max': self._get_brightness_params()['max'], 
+                        'default': self._get_brightness_params()['default'],
+                        'unit': 'factor',
+                        'step': self._get_brightness_params()['step'],
+                        'description': 'Brightness adjustment factor (1.0 = normal)'
                     }
                 }
             },
@@ -209,13 +247,13 @@ class ImageTransformer:
                 'category': 'basic',
                 'parameters': {
                     'adjustment': {
-                        'type': 'int', 
-                        'min': -50, 
-                        'max': 50, 
-                        'default': 0,
-                        'unit': 'percent',
-                        'step': 1,
-                        'description': 'Contrast adjustment (-50% less to +50% more contrast)'
+                        'type': 'float', 
+                        'min': self._get_contrast_params()['min'], 
+                        'max': self._get_contrast_params()['max'], 
+                        'default': self._get_contrast_params()['default'],
+                        'unit': 'factor',
+                        'step': self._get_contrast_params()['step'],
+                        'description': 'Contrast adjustment factor (1.0 = normal)'
                     }
                 }
             },
@@ -225,11 +263,11 @@ class ImageTransformer:
                 'parameters': {
                     'radius': {
                         'type': 'float', 
-                        'min': 0.5, 
-                        'max': 20.0, 
-                        'default': 2.0,
+                        'min': self._get_blur_params()['min'], 
+                        'max': self._get_blur_params()['max'], 
+                        'default': self._get_blur_params()['default'],
                         'unit': 'pixels',
-                        'step': 0.1,
+                        'step': self._get_blur_params()['step'],
                         'description': 'Blur radius in pixels'
                     },
                     'blur_type': {'type': 'select', 'options': ['gaussian', 'motion', 'box'], 'default': 'gaussian'}
@@ -384,11 +422,11 @@ class ImageTransformer:
                 'parameters': {
                     'shear_angle': {
                         'type': 'float', 
-                        'min': -45, 
-                        'max': 45, 
-                        'default': 0,
+                        'min': self._get_shear_params()['min'], 
+                        'max': self._get_shear_params()['max'], 
+                        'default': self._get_shear_params()['default'],
                         'unit': 'degrees',
-                        'step': 0.1,
+                        'step': self._get_shear_params()['step'],
                         'description': 'Shear angle in degrees'
                     }
                 }
